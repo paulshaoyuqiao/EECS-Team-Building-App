@@ -3,6 +3,7 @@
 
 # inner gitignore
 ./server/.gitignore
+./server/__pycache__/
 
 # Logs
 logs
