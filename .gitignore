@@ -220,6 +220,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# google auth client
+server/google_oauth2_info.json
+
 .idea/
 package.json
 public/
