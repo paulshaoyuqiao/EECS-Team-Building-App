@@ -1,9 +1,11 @@
+import os
 import json
 import requests
 from user import User
 from oauthlib.oauth2 import WebApplicationClient
 
 GOOGLE_DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+GOOGLE_CREDENTIALS = os.path.join(os.path.dirname(__file__), 'google_oauth2_info.json')
 
 
 def get_google_provider_cfg():
@@ -15,7 +17,7 @@ class Authenticator(object):
     Main class for handling authenticating users to the application
     and cross-checking their registration information.
     """
-    with open('../google_oauth2_info.json') as f:
+    with open(GOOGLE_CREDENTIALS) as f:
         oauth2_info = json.load(f)
         client_id = oauth2_info['CLIENT_ID']
         client_secret = oauth2_info['CLIENT_SECRET']

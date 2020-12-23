@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, redirect, request, url_for, session
 from middleware.auth import Authenticator
+from middleware.registration import check_user_registration
 
 
 # Flask app setup
@@ -19,7 +20,7 @@ def index():
                    'name': session.get('name'),
                    'email': session.get('email'),
                    'profile_pic': session.get('profile_pic'),
-               }, 200
+               }
     return {
         'is_logged_in': False
     }
@@ -47,6 +48,12 @@ def logout():
     session.clear()
     session['is_logged_in'] = False
     return redirect(url_for('index'))
+
+
+@app.route('/is_registered')
+def is_registered():
+    email = request.args.get('email')
+    return check_user_registration(email)
 
 
 if __name__ == '__main__':
