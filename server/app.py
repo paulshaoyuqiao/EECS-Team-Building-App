@@ -1,25 +1,13 @@
-import json
 import os
 
 from flask import Flask, redirect, request, url_for, session
 from middleware.auth import Authenticator
-import requests
 
-# Configuring Google OAuth 2
-with open('google_oauth2_info.json') as f:
-    oauth2_info = json.load(f)
-    GOOGLE_CLIENT_ID = oauth2_info['CLIENT_ID']
-    GOOGLE_CLIENT_SECRET = oauth2_info['CLIENT_SECRET']
-GOOGLE_DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 
 # Flask app setup
 app = Flask(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
-
-
-def get_google_provider_cfg():
-    return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 
 @app.route('/')
