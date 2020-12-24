@@ -28,15 +28,15 @@ class Database(object):
 
     @property
     def users(self):
-        return self.client.users
+        return self.client.core_data['users']
 
     @property
     def rosters(self):
-        return self.client.rosters
+        return self.client.core_data['rosters']
 
     @property
     def templates(self):
-        return self.client.templates
+        return self.client.core_data['templates']
 
 
 db = Database()
