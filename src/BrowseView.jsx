@@ -11,8 +11,9 @@ import {
     Box,
     Snackbar,
     CircularProgress,
+    FormGroup,
 } from "@material-ui/core";
-import {Menu, VpnKey} from "@material-ui/icons";
+import {Menu, CheckCircleRounded, ErrorRounded} from "@material-ui/icons";
 import { Autocomplete, Alert } from "@material-ui/lab";
 import ApiManager from "./api/api";
 import {GoogleLogin, GoogleLogout} from "react-google-login";
@@ -147,70 +148,79 @@ class BrowseView extends React.Component {
         } else if (!this.state.isUserRegistered) {
             // If the user is not yet registered, shows the registration form
             return (
-                <FormControl>
-                    <Typography variant="h6">
-                        Which course are you teaching?
-                    </Typography>
-                    <Autocomplete
-                        options={courses}
-                        getOptionLabel={(course) => course}
-                        style={{ width: 300 }}
-                        renderInput={(params) => <TextField {...params} label="Course Name" variant="outlined" />}
-                        value={this.state.course}
-                        onChange={(event, course) => {
-                            if (course !== null) {
-                                this.setState({course});
-                            }
-                        }}
-                    />
-                    <Typography variant="h6">
-                        Please provide the registration key for the course.
-                    </Typography>
-                    <TextField
-                        label="Registration Key"
-                        variant="outlined"
-                        value={this.state.registrationKey}
-                        onChange={(event) => {
-                            const registrationKey = event.target.value;
-                            if (registrationKey !== null) {
-                                this.setState({registrationKey});
-                            }
-                        }}
-                    />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={this.registerUser}
-                    >
-                        Verify Registration
-                    </Button>
+                <FormGroup>
+                    <FormControl>
+                        <Typography variant="h6" style={{marginTop: "3pt", marginBottom: "3pt"}}>
+                            Which course are you teaching?
+                        </Typography>
+                        <Autocomplete
+                            options={courses}
+                            getOptionLabel={(course) => course}
+                            style={{ width: 300 }}
+                            renderInput={(params) => <TextField {...params} label="Course Name" variant="outlined" />}
+                            value={this.state.course}
+                            onChange={(_, course) => {
+                                if (course !== null) {
+                                    this.setState({course});
+                                }
+                            }}
+                        />
+                    </FormControl>
+                    <FormControl>
+                        <Typography variant="h6" style={{marginTop: "3pt", marginBottom: "3pt"}}>
+                            Please provide the registration key for the course.
+                        </Typography>
+                        <TextField
+                            label="Registration Key"
+                            variant="outlined"
+                            value={this.state.registrationKey}
+                            onChange={(event) => {
+                                const registrationKey = event.target.value;
+                                if (registrationKey !== null) {
+                                    this.setState({registrationKey});
+                                }
+                            }}
+                        />
+                    </FormControl>
+                    <FormControl>
+                        <Button
+                            style={{marginTop: "3pt"}}
+                            variant="contained"
+                            color="primary"
+                            onClick={this.registerUser}
+                        >
+                            Verify Registration
+                        </Button>
+                    </FormControl>
                     <Snackbar
                         open={this.state.showRegistrationError}
                         autoHideDuration={5000}
                         onClose={() => this.setState({showRegistrationError: false})}
                         anchorOrigin={{vertical: "top", horizontal: "center"}}
                     >
-                        <Alert severity="error">
+                        <Alert severity="error" icon={<ErrorRounded />}>
                             {this.state.registrationError}
                         </Alert>
                     </Snackbar>
-                    <Snackbar
-                        open={this.state.showRegistrationSuccess}
-                        autoHideDuration={5000}
-                        onClose={() => this.setState({showRegistrationSuccess: false})}
-                        anchorOrigin={{vertical: "top", horizontal: "center"}}
-                    >
-                        <Alert severity="success">
-                            Registration Success!
-                        </Alert>
-                    </Snackbar>
-                </FormControl>
+                </FormGroup>
             )
         }
         return (
-            <div>
-                TODO: Add in Form Data Here
-            </div>
+            <>
+                <Snackbar
+                    open={this.state.showRegistrationSuccess}
+                    autoHideDuration={5000}
+                    onClose={() => this.setState({showRegistrationSuccess: false})}
+                    anchorOrigin={{vertical: "top", horizontal: "center"}}
+                >
+                    <Alert severity="success" icon={<CheckCircleRounded />}>
+                        Registration Success!
+                    </Alert>
+                </Snackbar>
+                <div>
+                    TODO: Add in Form Data Here
+                </div>
+            </>
         );
     }
 
@@ -218,7 +228,7 @@ class BrowseView extends React.Component {
         return (
             <>
                 <div style={{flexGrow: 1}}>
-                    <AppBar position="static">
+                    <AppBar position="static" variant="outlined" color="primary">
                         <Toolbar>
                             <IconButton edge="start">
                                 <Menu />
