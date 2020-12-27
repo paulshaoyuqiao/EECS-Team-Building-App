@@ -13,8 +13,9 @@ import {
     CircularProgress,
     FormGroup,
 } from "@material-ui/core";
-import {Menu, CheckCircleRounded, ErrorRounded} from "@material-ui/icons";
+import {Menu, CheckCircleRounded, ErrorRounded, NoteAddRounded} from "@material-ui/icons";
 import { Autocomplete, Alert } from "@material-ui/lab";
+import { FormCreationView } from "./FormCreationView";
 import ApiManager from "./api/api";
 import {GoogleLogin, GoogleLogout} from "react-google-login";
 import { courses } from "./data/utils";
@@ -36,6 +37,7 @@ class BrowseView extends React.Component {
             showRegistrationError: false,
             registrationError: "",
             isInitialized: false,
+            showNewFormTemplate: false,
         };
     }
 
@@ -94,6 +96,26 @@ class BrowseView extends React.Component {
         console.error("Login Failed", res);
     }
 
+    renderBrowseViewFormOptions = () => {
+        if (this.state.isUserRegistered) {
+            return (
+                <>
+                    <Button 
+                        variant="contained"
+                        size="large"
+                        style={{marginRight: "5pt"}}
+                        color="secondary"
+                        startIcon={<NoteAddRounded />}
+                        onClick={() => this.setState({showNewFormTemplate: !this.state.showNewFormTemplate})}
+                    >
+                        New Form
+                    </Button>
+                </>
+            );
+        }
+        return <></>;
+    }
+
     renderBrowseViewAppBarOptions = () => {
         if (!this.state.isUserLoggedIn) {
             return (
@@ -115,6 +137,7 @@ class BrowseView extends React.Component {
                         Welcome {name ? name : ""}!
                     </Typography>
                     <Avatar variant="circular" src={profilePicLink} style={{marginRight: "1%"}}/>
+                    {this.renderBrowseViewFormOptions()}
                     <GoogleLogout
                         clientId="818587922434-cacu513e45l2u0gkkr4qrnl52m8orie6.apps.googleusercontent.com"
                         buttonText="Log out"
@@ -139,7 +162,6 @@ class BrowseView extends React.Component {
                     margin: 0,
                     position: "absolute",
                     top: "50%",
-                    "-ms-transform": "translateY(-50%)",
                     transform: "translateY(-50%)",
                 }}>
                     <CircularProgress size={100} />
@@ -203,7 +225,15 @@ class BrowseView extends React.Component {
                         </Alert>
                     </Snackbar>
                 </FormGroup>
-            )
+            );
+        } else if (this.state.showNewFormTemplate) {
+            return (
+                <FormCreationView
+                    email={this.state.email}
+                    course={this.state.course}
+                    name={this.state.name}
+                />
+            );
         }
         return (
             <>

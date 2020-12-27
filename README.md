@@ -23,5 +23,7 @@ Current Progress:
 - [x] Link Flask Backend with React Frontend
 - [x] Initial React Frontend for Home Page
 - [x] Complete Authentication and Registration Workflow
-- [ ] Initial Design for Team Import & Search Page 
-- [ ] Initial Design for Team Building Form Template Page & Architecture
+- [x] Form Creation and Persistence
+- [ ] Form Generation from Template 
+- [ ] Initial Design for Roster Import & Search Page 
+- [ ] Initial Design for Matching Algorithm
