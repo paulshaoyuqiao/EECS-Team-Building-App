@@ -24,4 +24,8 @@ Current Progress:
 - [x] Initial React Frontend for Home Page
 - [x] Complete Authentication and Registration Workflow
 - [ ] Initial Design for Team Import & Search Page 
+<<<<<<< HEAD
 - [ ] Initial Design for Team Building Form Template Page & Architecture
+=======
+- [ ] Initial Design for Team Building Form Template Page & Architecture
+>>>>>>> 2cd861c47bc7e1c6df7c08136385da9e504e5276

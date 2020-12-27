@@ -1,5 +1,6 @@
 # google auth client
-./server/google_oauth2_info.json
+./server/middleware/google_oauth2_info.json
+./server/database/cluster_info.json
 
 # inner gitignore
 ./server/.gitignore
@@ -234,3 +235,5 @@ dist
 package.json
 public/
 yarn.lock
+
+.gitignore
