@@ -1,6 +1,7 @@
 import pymongo
 import json
 import os
+import ssl
 
 MONGO_CLUSTER = os.path.join(os.path.dirname(__file__), 'cluster_info.json')
 
@@ -23,7 +24,7 @@ class Database(object):
     def __new__(cls):
         if cls._inst is None:
             cls._inst = super().__new__(cls)
-            cls.client = pymongo.MongoClient(cls._db_client)
+            cls.client = pymongo.MongoClient(cls._db_client, ssl_cert_reqs=ssl.CERT_NONE)
         return cls._inst
 
     @property

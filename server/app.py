@@ -3,6 +3,7 @@ import os
 from flask import Flask, request
 from flask_cors import CORS
 from middleware.registration import check_user_registration, verify_registration
+from middleware.form_template_handler import add_new_template
 
 # Flask app setup
 app = Flask(__name__)
@@ -25,6 +26,10 @@ def register():
     user_info = request.args
     return verify_registration(user_info), 200
 
+@app.route('/new_template', methods=['POST'])
+def add_template():
+    template_data = request.get_json(force=True)
+    return add_new_template(template_data), 200
 
 if __name__ == '__main__':
     app.run(host="127.0.0.1", port="5000")
