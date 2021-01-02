@@ -15,11 +15,18 @@ import {
 } from "@material-ui/core";
 import {Menu, CheckCircleRounded, ErrorRounded, NoteAddRounded} from "@material-ui/icons";
 import { Autocomplete, Alert } from "@material-ui/lab";
+import { DataGrid } from "@material-ui/data-grid";
 import { FormCreationView } from "./FormCreationView";
 import ApiManager from "./api/api";
 import {GoogleLogin, GoogleLogout} from "react-google-login";
-import { courses } from "./data/utils";
+import { courses, getFormPath } from "./data/utils";
 
+const formMetadataColumns = [
+    { field: "name", headerName: "Author", width: 200 },
+    { field: "formName", headerName: "Form Name", width: 300 },
+    { field: "count", headerName: "# Responses", width: 150 },
+    { field: "url", headerName: "Published Url", width: 400 },
+];
 
 class BrowseView extends React.Component {
     constructor(props) {
@@ -38,6 +45,7 @@ class BrowseView extends React.Component {
             registrationError: "",
             isInitialized: false,
             showNewFormTemplate: false,
+            formMetadata: [],
         };
     }
 
@@ -50,6 +58,7 @@ class BrowseView extends React.Component {
             const isInitialized = true;
             this.setState({isUserRegistered, isInitialized});
         });
+        this.fetchAllCourseFormMetadata();
     }
 
     registerUser = () => {
@@ -147,6 +156,19 @@ class BrowseView extends React.Component {
                 </>
             );
         }
+    }
+
+    fetchAllCourseFormMetadata = () => {
+        // fetches the metadata of all the published forms for the current course
+        ApiManager.get("/template_metadata", {course: this.state.course}).then((response) => {
+            const metadata = response.data["metadata"]
+            console.log("Received response from /template_metadata", metadata);
+            metadata.forEach((row, index) => {
+                row["url"] = getFormPath(row["formName"], row["course"]);
+                row["id"] = index;
+            })
+            this.setState({formMetadata: metadata});
+        });
     }
 
     renderBrowseViewMainContainer = () => {
@@ -247,8 +269,8 @@ class BrowseView extends React.Component {
                         Registration Success!
                     </Alert>
                 </Snackbar>
-                <div>
-                    TODO: Add in Form Data Here
+                <div style={{ width: "100%", height: "800px"}}>
+                    <DataGrid rows={this.state.formMetadata} columns={formMetadataColumns} pageSize={20} />
                 </div>
             </>
         );

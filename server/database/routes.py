@@ -39,5 +39,9 @@ class Database(object):
     def templates(self):
         return self.client.core_data['templates']
 
+    @property
+    def form_responses(self):
+        return self.client.core_data['form_responses']
+
 
 db = Database()
