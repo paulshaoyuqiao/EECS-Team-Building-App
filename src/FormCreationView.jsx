@@ -24,6 +24,7 @@ import {
     CancelRounded,
 } from "@material-ui/icons";
 import ApiManager from "./api/api";
+import {getFormPath} from "./data/utils";
 
 const qType = Object.freeze({
     shortAnswer: "short-answer",
@@ -199,7 +200,8 @@ export class FormCreationView extends React.Component {
             name: this.props.name,
             email: this.props.email,
             course: this.props.course,
-            template: this.state.template
+            template: this.state.template,
+            formName: this.state.formName,
         };
         ApiManager.post('/new_template', templateData).then((response) => {
             const data = response.data;
@@ -210,16 +212,20 @@ export class FormCreationView extends React.Component {
     }
 
     render() {
+        const formName = this.state.formName ? this.state.formName : "";
+        const course = this.props.course ? this.props.course : "";
         return (
             <>
                 <Snackbar
                     open={this.state.showFormCreationSuccess}
-                    autoHideDuration={5000}
+                    autoHideDuration={8000}
                     onClose={() => this.setState({showFormCreationSuccess: false})}
                     anchorOrigin={{vertical: "top", horizontal: "center"}}
                 >
                     <Alert severity="success" icon={<CheckCircleRounded />}>
-                        Form Successfully Published!
+                        Form Successfully Published! <br />
+                        Your form is published at path {getFormPath(formName, course)}. <br />
+                        Please refresh this page to finalize the publishing process.
                     </Alert>
                 </Snackbar>
                 <FormGroup>

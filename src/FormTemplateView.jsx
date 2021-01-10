@@ -1,0 +1,271 @@
+import * as React from "react";
+import {
+    FormGroup,
+    FormControl,
+    TextField,
+    Divider,
+    Typography,
+    RadioGroup,
+    Radio,
+    FormControlLabel,
+    Checkbox,
+    CircularProgress,
+    Box,
+    AppBar,
+    Toolbar,
+    IconButton,
+    Button,
+    Snackbar,
+} from "@material-ui/core";
+import {List, MenuBook, Send} from "@material-ui/icons";
+import {Alert} from "@material-ui/lab";
+import ApiManager from "./api/api";
+
+const qType = Object.freeze({
+    shortAnswer: "short-answer",
+    singleSelect: "single-select",
+    multiSelect: "multi-select",
+});
+
+export class FormTemplateView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            formName: "",
+            course: "",
+            data: {},
+            template: [],
+            showMissingFieldError: false,
+            showSubmissionSuccess: false,
+        };
+    }
+
+    handleSingleValueChange = (event, type, prompt) => {
+        let data = this.state.data;
+        data[type][prompt] = event.target.value;
+        this.setState({data});
+    }
+    
+    handleMultiValueChange = (event, type, prompt) => {
+        let data = this.state.data;
+        let selections = data[type][prompt];
+        let currOption = event.target.name;
+        if (selections.includes(currOption)) {
+            selections = selections.filter((o) => o !== currOption);
+        } else {
+            selections.push(currOption);
+        }
+        data[type][prompt] = selections;
+        this.setState({data});
+    }
+
+    renderQuestionBody = (question) => {
+        const {type, prompt, options} = question;
+        const promptHeader = <Typography variant="h6">{prompt}</Typography>;
+        let body;
+        switch(type) {
+            case qType.shortAnswer:
+                body = (
+                    <TextField
+                        label="Answer"
+                        variant="outlined"
+                        required={true}
+                        value={this.state.data[type][prompt]}
+                        onChange={(event) => this.handleSingleValueChange(event, type, prompt)}
+                        fullWidth={true}
+                        style={{marginTop: "10pt", marginBottom: "10pt"}}
+                    />
+                );
+                break;
+            case qType.singleSelect:
+                body = (
+                    <RadioGroup value={this.state.data[type][prompt]} onChange={(event) => this.handleSingleValueChange(event, type, prompt)}>
+                        {options.map((option) => {
+                            return (
+                                <FormControlLabel
+                                    value={option}
+                                    control={<Radio />}
+                                    label={option}
+                                />
+                            );
+                        })}
+                    </RadioGroup>
+                );
+                break;
+            default:
+                body = (
+                    <FormGroup>
+                        {options.map((option) => {
+                            return (
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox 
+                                            checked={this.state.data[type][prompt].includes(option)} 
+                                            onChange={(event) => this.handleMultiValueChange(event, type, prompt)} 
+                                            name={option} 
+                                        />
+                                    }
+                                    label={option}
+                                />
+                            );
+                        })}
+                    </FormGroup>
+                );
+                break;
+        }
+        return (
+            <>
+                {promptHeader}
+                {body}
+            </>
+        );
+    }
+
+    submitFormResponse = () => {
+        // First checks that all required fields are non-empty.
+        // TODO: enable optional fields; for now, all fields are mandatory.
+        let response = [];
+        const data = this.state.data;
+        let allFilledOut = true;
+        for (var qType in data) {
+            for (var q in data[qType]) {
+                let ans = data[qType][q];
+                if (typeof ans === "string" && ans.trim().length === 0) {
+                    allFilledOut = false;
+                } else if (Array.isArray(ans) && ans.length === 0){
+                    allFilledOut = false;
+                }
+                if (!allFilledOut) {
+                    this.setState({showMissingFieldError: true});
+                    return;
+                }
+                response.push(ans);
+            }
+        }
+        const formData = {
+            formName: this.state.formName,
+            response: response,
+        };
+        ApiManager.post('/submit_response', formData).then((response) => {
+            const data = response.data;
+            if ("success" in data && data["success"]) {
+                this.setState({showSubmissionSuccess: true});
+            }
+        });
+    }
+
+    renderFormFromTemplate = (template) => {
+        // expecting template to be an array of objects strictly containing 3 exact fields: type, prompt, and options
+        return (
+            <>
+                {template.map((question) => {
+                    return (
+                        <>
+                            <FormControl>
+                                {this.renderQuestionBody(question)}
+                            </FormControl>
+                            <Divider style={{margin: "10pt"}}/>
+                        </>
+                    );
+                })}
+                <Button
+                    onClick={this.submitFormResponse}
+                    variant="contained"
+                    endIcon={<Send />}
+                    style={{
+                        backgroundColor: "green",
+                        color: "white",
+                        width: "100px",
+                    }}
+                >
+                    Submit
+                </Button>
+            </>
+        );
+    }
+
+    mountFormState = (template) => {
+        const data = {};
+        for (var t in qType) {
+            data[qType[t]] = {};
+        }
+        const course = template["course"];
+        const formName = template["formName"];
+        template = template["template"];
+        template.forEach(question => {
+            const {type, prompt} = question;
+            if ([qType.shortAnswer, qType.singleSelect].includes(type)) {
+                data[type][prompt] = "";
+            } else {
+                data[type][prompt] = [];
+            }
+        });
+        this.setState({data, template, formName, course});
+    }
+
+    componentDidMount() {
+        this.mountFormState(this.props.template);
+    }
+
+    render() {
+        const template = this.state.template;
+        if (template.length === 0) {
+            return (
+                <div style={{
+                    margin: 0,
+                    position: "absolute",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                }}>
+                    <CircularProgress size={100} />
+                </div>
+            );
+        } else {
+            return (
+                <>
+                    <Snackbar
+                        open={this.state.showMissingFieldError}
+                        autoHideDuration={5000}
+                        onClose={() => this.setState({showMissingFieldError: false})}
+                        anchorOrigin={{vertical: "top", horizontal: "center"}}
+                    >
+                        <Alert severity="error">
+                            Please make sure all fields are filled out before submitting!
+                        </Alert>
+                    </Snackbar>
+                    <Snackbar
+                        open={this.state.showSubmissionSuccess}
+                        autoHideDuration={5000}
+                        onClose={() => this.setState({showSubmissionSuccess: false})}
+                        anchorOrigin={{vertical: "top", horizontal: "center"}}
+                    >
+                        <Alert severity="success">
+                            Your response has been successfully submitted!
+                        </Alert>
+                    </Snackbar>
+                    <AppBar position="static" variant="outlined" color="primary">
+                        <Toolbar>
+                            <IconButton edge="start">
+                                <List style={{color: "white"}}/>
+                            </IconButton>
+                            <Typography variant="h6" style={{flexGrow: 1}}>
+                                {this.state.formName}
+                            </Typography>
+                            <div style={{display: "flex", flexDirection: "row"}}>
+                                <MenuBook style={{marginRight: "5px"}} />
+                                <Typography variant="h6" style={{flexGrow: 1}}>
+                                    {this.state.course}
+                                </Typography>
+                            </div>
+                        </Toolbar>
+                    </AppBar>
+                    <Box style={{margin: "2%"}}>
+                        <FormGroup>
+                            {this.renderFormFromTemplate(template)}
+                        </FormGroup>
+                    </Box>
+                </>
+            );
+        }
+    }
+}
