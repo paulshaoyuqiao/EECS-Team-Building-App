@@ -25,6 +25,8 @@ import {
     CheckCircleRounded, 
     CancelRounded,
     InfoRounded,
+    WarningRounded,
+    LinkRounded,
 } from "@material-ui/icons";
 import ApiManager from "./api/api";
 import {getFormPath} from "./data/utils";
@@ -42,6 +44,8 @@ export class FormCreationView extends React.Component {
             template: [],
             formName: "",
             formUrl: "",
+            allFormNames: new Set(),
+            allFormSubUrls: new Set(),
             submitButtonName: "Publish Form",
             formPublishMessage: "Form Successfully Published!",
             showFormCreationSuccess: false,
@@ -57,6 +61,21 @@ export class FormCreationView extends React.Component {
             // If form name and the template have been predefined, the form is being edited
             this.setState({formName, template, submitButtonName, formPublishMessage});
         }
+        this.fetchAllFormMetadata();
+    }
+
+    fetchAllFormMetadata = () => {
+        // Fetches all the registered form names and suburls to avoid collision
+        ApiManager.get("/template_metadata", {course: this.props.course}).then((response) => {
+            const metadata = response.data["metadata"]
+            console.log("Received response from /template_metadata", metadata);
+            const allFormNames = new Set(metadata.map((row) => row["formName"]));
+            const allFormSubUrls = new Set(metadata.map((row) => {
+                const url = getFormPath(row["formName"], row["course"], row["formUrl"]);
+                return url.split("/").lastItem;
+            }));
+            this.setState({allFormNames, allFormSubUrls});
+        });
     }
 
     renderAllOptions = (index, allOptions) => {
@@ -236,6 +255,14 @@ export class FormCreationView extends React.Component {
         }
     }
 
+    checkFormNameCollision = () => {
+        return this.state.allFormNames.has(this.state.formName);
+    }
+
+    checkFormUrlCollision = () => {
+        return this.state.allFormSubUrls.has(this.state.formUrl);
+    }
+
     render() {
         const formName = this.state.formName ? this.state.formName : "";
         const course = this.props.course ? this.props.course : "";
@@ -269,6 +296,12 @@ export class FormCreationView extends React.Component {
                             label="Form Name"
                             variant="outlined"
                             required={true}
+                            error={this.checkFormNameCollision()}
+                            helperText={
+                                this.checkFormNameCollision() 
+                                    ? "The form name already exists. By default, any changes you make will update the original form." 
+                                    : ""
+                            }
                             value={this.state.formName}
                             onChange={(event) => this.setState({formName: event.target.value})} 
                             fullWidth={true}
@@ -303,10 +336,35 @@ export class FormCreationView extends React.Component {
                             variant="outlined"
                             required={true}
                             value={this.state.formUrl}
+                            error={this.checkFormUrlCollision()}
+                            helperText={
+                                this.checkFormUrlCollision() 
+                                    ? "The url path already exists; publishing this form will update the original form." 
+                                    : "The url path hasn't been used. If you are updating a form, please note that the new changes will be reflected in the new path."
+                            }
                             onChange={(event) => this.setState({formUrl: event.target.value})}
                             fullWidth={true}
                             style={{marginTop: "10pt", marginBottom: "10pt"}}
                         />
+                    </FormControl>
+                    <FormControl>
+                        <Typography>
+                            {
+                                this.state.formName.trim().length === 0 
+                                    ? 
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <WarningRounded style={{color: "red"}}/><span style={{color: "red"}}>Form name cannot be empty.</span> 
+                                    </div>
+                                    : 
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <LinkRounded style={{color: "blue"}}/>
+                                        <span style={{color: "blue"}}>
+                                            The form will be currently published/updated at the following url: &nbsp; 
+                                            <code>{getFormPath(this.state.formName, this.props.course, this.state.formUrl)}</code>
+                                        </span>
+                                    </div>
+                            }
+                        </Typography>
                     </FormControl>
                     <Divider style={{margin: "10pt"}}/>
                     {this.renderAllQuestions()}
