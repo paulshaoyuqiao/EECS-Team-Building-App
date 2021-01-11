@@ -2,6 +2,8 @@ import * as React from "react";
 import { withRouter } from "react-router-dom";
 import { AgGridReact } from "ag-grid-react";
 import { FormEditRenderer } from "./FormEditRenderer";
+import { FormResponseVizRenderer } from "./FormResponseVizRenderer";
+import { FormAccessType } from "./data/utils";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-balham.css";
 
@@ -11,6 +13,7 @@ const formMetadataColumns = [
     { field: "count", headerName: "# Responses", width: 150 },
     { field: "url", headerName: "Published Url", width: 300 },
     { field: "url", headerName: "Edit Form", cellRenderer: "formEditRenderer"},
+    { field: "url", headerName: "Response Summary", cellRenderer: "formResponseVizRenderer"},
 ];
 
 const formMetadataColDefs = {
@@ -23,6 +26,7 @@ const formMetadataColDefs = {
 
 const formFrameworkComponents = {
     formEditRenderer: FormEditRenderer,
+    formResponseVizRenderer: FormResponseVizRenderer,
 };
 
 class FormMetadataGridView extends React.Component {
@@ -38,25 +42,25 @@ class FormMetadataGridView extends React.Component {
         this.gridColumnApi = params.columnApi;
     }
 
-    getFormEditLink = (node) => {
+    getLink = (node, type) => {
         console.log("node", node);
         const formUrl = node.data.url;
-        return `${formUrl.substring(formUrl.indexOf("/") + 1)}/edit`;
-    }
-
-    getUser = () => {
-        return this.props.username;
-    }
-
-    checkIsRegistered = () => {
-        return this.props.isRegistered;
+        const partialUrl = formUrl.substring(formUrl.indexOf("/") + 1);
+        switch (type) {
+            case FormAccessType.EDIT:
+                return `${partialUrl}/edit`;
+            case FormAccessType.VISUALIZE:
+                return `${partialUrl}/viz`;
+            default:
+                return "";
+        }
     }
 
     render() {
         return (
             <div
                 className="ag-theme-balham"
-                style={{height: "100%", width: "100%"}}
+                style={{height: "800pt", width: "100%"}}
             >
                 <AgGridReact
                     enableCellTextSelection={true}

@@ -9,5 +9,9 @@ const getFormPath = (formName, formCourse, formUrl="", withoutBase=false) => {
     return withoutBase ? `/${formPath}` : `${clientBaseUrl}/${formPath}`;
 }
 
+const FormAccessType = Object.freeze({
+    EDIT: "edit",
+    VISUALIZE: "viz",
+});
 
-export { courses, clientBaseUrl, getFormPath };
+export { courses, clientBaseUrl, getFormPath, FormAccessType };

@@ -8,6 +8,7 @@ from middleware.form_template_handler import (
     fetch_all_templates,
     submit_form_response,
     fetch_template_metadata_by_course,
+    aggregate_form_responses,
 )
 
 # Flask app setup
@@ -49,6 +50,11 @@ def get_templates_by_course():
 def submit_response():
     response_data = request.get_json(force=True)
     return submit_form_response(response_data), 200
+
+@app.route('/aggregate_response')
+def get_aggregated_responses():
+    form_id = request.args.get('formId')
+    return aggregate_form_responses(form_id), 200
 
 if __name__ == '__main__':
     app.run(host="127.0.0.1", port="5000")

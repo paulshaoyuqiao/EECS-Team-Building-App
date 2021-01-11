@@ -4,6 +4,7 @@ import {BrowserRouter, Switch, Route} from "react-router-dom";
 import ApiManager from "./api/api";
 import {FormTemplateView} from "./FormTemplateView";
 import {FormUpdateView} from "./FormUpdateView";
+import {FormResponseSummaryView} from "./FormResponseSummaryView";
 import {getFormPath} from "./data/utils";
 
 class App extends React.Component {
@@ -24,6 +25,7 @@ class App extends React.Component {
             const {formName, course, formUrl, formId} = template;
             const formPath = getFormPath(formName, course, formUrl, true);
             const editPath = `${formPath}/edit`;
+            const vizPath = `${formPath}/viz`;
             return (
               <>
                 <Route
@@ -45,6 +47,19 @@ class App extends React.Component {
                         formUrl={formUrl}
                         formId={formId} 
                         course={course}
+                      />
+                  }
+                />
+                <Route
+                  path={vizPath}
+                  exact={true}
+                  key={`${formId}-viz`}
+                  render={
+                    (props) => 
+                      <FormResponseSummaryView
+                        {...props}
+                        formName={formName}
+                        formId={formId}
                       />
                   }
                 />

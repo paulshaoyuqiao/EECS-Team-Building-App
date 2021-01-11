@@ -125,10 +125,9 @@ export class FormTemplateView extends React.Component {
     submitFormResponse = () => {
         // First checks that all required fields are non-empty.
         // TODO: enable optional fields; for now, all fields are mandatory.
-        let response = [];
         const data = this.state.data;
         let allFilledOut = true;
-        for (const ans in Object.values(data)) {
+        for (const [_, ans] of Object.entries(data)) {
             if (typeof ans === "string" && ans.trim().length === 0) {
                 allFilledOut = false;
             } else if (Array.isArray(ans) && ans.length === 0){
@@ -138,11 +137,10 @@ export class FormTemplateView extends React.Component {
                 this.setState({showMissingFieldError: true});
                 return;
             }
-            response.push(ans);
         }
         const formData = {
             formId: this.state.formId,
-            response: response,
+            response: data,
         };
         ApiManager.post('/submit_response', formData).then((response) => {
             const data = response.data;
