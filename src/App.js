@@ -3,6 +3,8 @@ import {BrowseView} from "./BrowseView"
 import {BrowserRouter, Switch, Route} from "react-router-dom";
 import ApiManager from "./api/api";
 import {FormTemplateView} from "./FormTemplateView";
+import {FormUpdateView} from "./FormUpdateView";
+import {getFormPath} from "./data/utils";
 
 class App extends React.Component {
   constructor(props) {
@@ -17,18 +19,26 @@ class App extends React.Component {
       const templates = response.data["templates"];
       const allTemplates = (
         <Switch>
-          <Route path="/" exact={true} key={"index"} render={() => <BrowseView />} />
+          <Route path="/" exact={true} key="index" render={() => <BrowseView />} />
           {templates.map((template, index) => {
-            const formName = template["formName"].toLowerCase();
-            const formCourse = template["course"].toLowerCase().split(" ")[1];
-            const formPath = `/${formCourse}/${formName.replaceAll(" ", "-")}`;
+            const {formName, course, formUrl, formId} = template;
+            const formPath = getFormPath(formName, course, formUrl, true);
+            const editPath = `${formPath}/edit`;
             return (
-              <Route 
-                path={formPath}
-                exact={true}
-                key={`${formCourse}-${index}`}
-                render={() => <FormTemplateView template={template} />}
-              />
+              <>
+                <Route
+                  path={formPath}
+                  exact={true}
+                  key={formId}
+                  render={() => <FormTemplateView template={template} />}
+                />
+                <Route
+                  path={editPath}
+                  exact={true}
+                  key={`${formId}-edit`}
+                  render={(props) => <FormUpdateView {...props} template={template["template"]} formName={formName} formId={formId} course={course}/>}
+                />
+              </>
             );
           })}
         </Switch>
