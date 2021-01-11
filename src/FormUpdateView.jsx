@@ -7,7 +7,7 @@ export class FormUpdateView extends React.Component {
     render() {
         const user = localStorage.getItem("username");
         const isRegistered = localStorage.getItem("isRegistered");
-        const {template, formName, formId, course} = this.props;
+        const {template, formName, formId, formUrl, course} = this.props;
         return (
             <div style={{flexGrow: 1}}>
                 <AppBar position="static" variant="outlined" color="primary">
@@ -33,7 +33,13 @@ export class FormUpdateView extends React.Component {
                 >
                     {isRegistered
                         ?
-                        <FormCreationView template={template} formName={formName} formId={formId} course={course} />
+                        <FormCreationView 
+                            template={template} 
+                            formName={formName} 
+                            formId={formId} 
+                            formUrl={formUrl}
+                            course={course} 
+                        />
                         :
                         <Typography>
                             Direct access has been disabled.

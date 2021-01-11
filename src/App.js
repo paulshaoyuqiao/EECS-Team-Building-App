@@ -36,7 +36,17 @@ class App extends React.Component {
                   path={editPath}
                   exact={true}
                   key={`${formId}-edit`}
-                  render={(props) => <FormUpdateView {...props} template={template["template"]} formName={formName} formId={formId} course={course}/>}
+                  render={
+                    (props) => 
+                      <FormUpdateView 
+                        {...props} 
+                        template={template["template"]} 
+                        formName={formName} 
+                        formUrl={formUrl}
+                        formId={formId} 
+                        course={course}
+                      />
+                  }
                 />
               </>
             );

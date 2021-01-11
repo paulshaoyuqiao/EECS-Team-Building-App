@@ -54,12 +54,12 @@ export class FormCreationView extends React.Component {
     }
 
     componentDidMount() {
-        const {formName, template} = this.props;
+        const {formName, formUrl, template} = this.props;
         if (formName && template) {
             const submitButtonName = "Update Form";
             const formPublishMessage = "Form Successfully Updated!"
             // If form name and the template have been predefined, the form is being edited
-            this.setState({formName, template, submitButtonName, formPublishMessage});
+            this.setState({formName, formUrl, template, submitButtonName, formPublishMessage});
         }
         this.fetchAllFormMetadata();
     }
