@@ -299,7 +299,7 @@ export class FormCreationView extends React.Component {
                             error={this.checkFormNameCollision()}
                             helperText={
                                 this.checkFormNameCollision() 
-                                    ? "The form name already exists. By default, any changes you make will update the original form." 
+                                    ? "The form name already exists. By default, unless a new url path is specified below, any changes you make will update the original form." 
                                     : ""
                             }
                             value={this.state.formName}
