@@ -236,4 +236,7 @@ package.json
 public/
 yarn.lock
 
+#python virtualenv
+venv/
+
 .gitignore
