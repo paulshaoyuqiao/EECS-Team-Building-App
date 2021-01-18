@@ -24,6 +24,8 @@ Current Progress:
 - [x] Initial React Frontend for Home Page
 - [x] Complete Authentication and Registration Workflow
 - [x] Form Creation and Persistence
-- [ ] Form Generation from Template 
+- [x] Form Auto Generation from Template and Dynamic Routing
+- [x] Dynamic Visualization of Form Submission Results
+- [ ] Authentication for Students Accessing Form
 - [ ] Initial Design for Roster Import & Search Page 
 - [ ] Initial Design for Matching Algorithm
