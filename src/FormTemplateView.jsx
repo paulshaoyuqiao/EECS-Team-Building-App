@@ -31,6 +31,7 @@ export class FormTemplateView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            formId: "",
             formName: "",
             course: "",
             data: {},
@@ -40,22 +41,22 @@ export class FormTemplateView extends React.Component {
         };
     }
 
-    handleSingleValueChange = (event, type, prompt) => {
+    handleSingleValueChange = (event, prompt) => {
         let data = this.state.data;
-        data[type][prompt] = event.target.value;
+        data[prompt] = event.target.value;
         this.setState({data});
     }
     
     handleMultiValueChange = (event, type, prompt) => {
         let data = this.state.data;
-        let selections = data[type][prompt];
+        let selections = data[prompt];
         let currOption = event.target.name;
         if (selections.includes(currOption)) {
             selections = selections.filter((o) => o !== currOption);
         } else {
             selections.push(currOption);
         }
-        data[type][prompt] = selections;
+        data[prompt] = selections;
         this.setState({data});
     }
 
@@ -70,8 +71,8 @@ export class FormTemplateView extends React.Component {
                         label="Answer"
                         variant="outlined"
                         required={true}
-                        value={this.state.data[type][prompt]}
-                        onChange={(event) => this.handleSingleValueChange(event, type, prompt)}
+                        value={this.state.data[prompt]}
+                        onChange={(event) => this.handleSingleValueChange(event, prompt)}
                         fullWidth={true}
                         style={{marginTop: "10pt", marginBottom: "10pt"}}
                     />
@@ -79,7 +80,7 @@ export class FormTemplateView extends React.Component {
                 break;
             case qType.singleSelect:
                 body = (
-                    <RadioGroup value={this.state.data[type][prompt]} onChange={(event) => this.handleSingleValueChange(event, type, prompt)}>
+                    <RadioGroup value={this.state.data[prompt]} onChange={(event) => this.handleSingleValueChange(event, prompt)}>
                         {options.map((option) => {
                             return (
                                 <FormControlLabel
@@ -100,7 +101,7 @@ export class FormTemplateView extends React.Component {
                                 <FormControlLabel
                                     control={
                                         <Checkbox 
-                                            checked={this.state.data[type][prompt].includes(option)} 
+                                            checked={this.state.data[prompt].includes(option)}
                                             onChange={(event) => this.handleMultiValueChange(event, type, prompt)} 
                                             name={option} 
                                         />
@@ -124,27 +125,22 @@ export class FormTemplateView extends React.Component {
     submitFormResponse = () => {
         // First checks that all required fields are non-empty.
         // TODO: enable optional fields; for now, all fields are mandatory.
-        let response = [];
         const data = this.state.data;
         let allFilledOut = true;
-        for (var qType in data) {
-            for (var q in data[qType]) {
-                let ans = data[qType][q];
-                if (typeof ans === "string" && ans.trim().length === 0) {
-                    allFilledOut = false;
-                } else if (Array.isArray(ans) && ans.length === 0){
-                    allFilledOut = false;
-                }
-                if (!allFilledOut) {
-                    this.setState({showMissingFieldError: true});
-                    return;
-                }
-                response.push(ans);
+        for (const [_, ans] of Object.entries(data)) {
+            if (typeof ans === "string" && ans.trim().length === 0) {
+                allFilledOut = false;
+            } else if (Array.isArray(ans) && ans.length === 0){
+                allFilledOut = false;
+            }
+            if (!allFilledOut) {
+                this.setState({showMissingFieldError: true});
+                return;
             }
         }
         const formData = {
-            formName: this.state.formName,
-            response: response,
+            formId: this.state.formId,
+            response: data,
         };
         ApiManager.post('/submit_response', formData).then((response) => {
             const data = response.data;
@@ -186,21 +182,19 @@ export class FormTemplateView extends React.Component {
 
     mountFormState = (template) => {
         const data = {};
-        for (var t in qType) {
-            data[qType[t]] = {};
-        }
         const course = template["course"];
+        const formId = template["formId"];
         const formName = template["formName"];
         template = template["template"];
         template.forEach(question => {
             const {type, prompt} = question;
             if ([qType.shortAnswer, qType.singleSelect].includes(type)) {
-                data[type][prompt] = "";
+                data[prompt] = "";
             } else {
-                data[type][prompt] = [];
+                data[prompt] = [];
             }
         });
-        this.setState({data, template, formName, course});
+        this.setState({data, template, formId, formName, course});
     }
 
     componentDidMount() {

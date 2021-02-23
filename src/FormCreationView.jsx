@@ -1,4 +1,5 @@
 import * as React from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
     FormGroup,
     FormControl,
@@ -13,6 +14,7 @@ import {
     Typography,
     ButtonGroup,
     Snackbar,
+    Tooltip,
 } from "@material-ui/core";
 import {Alert} from "@material-ui/lab";
 import {
@@ -22,6 +24,9 @@ import {
     PublishRounded, 
     CheckCircleRounded, 
     CancelRounded,
+    InfoRounded,
+    WarningRounded,
+    LinkRounded,
 } from "@material-ui/icons";
 import ApiManager from "./api/api";
 import {getFormPath} from "./data/utils";
@@ -38,8 +43,39 @@ export class FormCreationView extends React.Component {
         this.state = {
             template: [],
             formName: "",
+            formUrl: "",
+            allFormNames: new Set(),
+            allFormSubUrls: new Set(),
+            submitButtonName: "Publish Form",
+            formPublishMessage: "Form Successfully Published!",
             showFormCreationSuccess: false,
+            showMissingFormNameError: false,
         };
+    }
+
+    componentDidMount() {
+        const {formName, formUrl, template} = this.props;
+        if (formName && template) {
+            const submitButtonName = "Update Form";
+            const formPublishMessage = "Form Successfully Updated!"
+            // If form name and the template have been predefined, the form is being edited
+            this.setState({formName, formUrl, template, submitButtonName, formPublishMessage});
+        }
+        this.fetchAllFormMetadata();
+    }
+
+    fetchAllFormMetadata = () => {
+        // Fetches all the registered form names and suburls to avoid collision
+        ApiManager.get("/template_metadata", {course: this.props.course}).then((response) => {
+            const metadata = response.data["metadata"]
+            console.log("Received response from /template_metadata", metadata);
+            const allFormNames = new Set(metadata.map((row) => row["formName"]));
+            const allFormSubUrls = new Set(metadata.map((row) => {
+                const url = getFormPath(row["formName"], row["course"], row["formUrl"]);
+                return url.split("/").lastItem;
+            }));
+            this.setState({allFormNames, allFormSubUrls});
+        });
     }
 
     renderAllOptions = (index, allOptions) => {
@@ -196,19 +232,35 @@ export class FormCreationView extends React.Component {
     }
 
     submitTemplateForGeneration = () => {
-        const templateData = {
-            name: this.props.name,
-            email: this.props.email,
-            course: this.props.course,
-            template: this.state.template,
-            formName: this.state.formName,
-        };
-        ApiManager.post('/new_template', templateData).then((response) => {
-            const data = response.data;
-            if ("success" in data && data["success"]) {
-                this.setState({showFormCreationSuccess: true});
-            }
-        })
+        const formName = this.state.formName;
+        if (typeof formName !== "string" || formName.trim().length === 0) {
+            this.setState({showMissingFormNameError: true});
+        } else {
+            const templateData = {
+                name: this.props.name,
+                email: this.props.email,
+                course: this.props.course,
+                template: this.state.template,
+                formName: formName,
+                formUrl: this.state.formUrl,
+            };
+            const formId = this.props.formId;
+            templateData["formId"] = formId ? formId : uuidv4();
+            ApiManager.post('/new_template', templateData).then((response) => {
+                const data = response.data;
+                if ("success" in data && data["success"]) {
+                    this.setState({showFormCreationSuccess: true});
+                }
+            });
+        }
+    }
+
+    checkFormNameCollision = () => {
+        return this.state.allFormNames.has(this.state.formName);
+    }
+
+    checkFormUrlCollision = () => {
+        return this.state.allFormSubUrls.has(this.state.formUrl);
     }
 
     render() {
@@ -223,9 +275,18 @@ export class FormCreationView extends React.Component {
                     anchorOrigin={{vertical: "top", horizontal: "center"}}
                 >
                     <Alert severity="success" icon={<CheckCircleRounded />}>
-                        Form Successfully Published! <br />
-                        Your form is published at path {getFormPath(formName, course)}. <br />
-                        Please refresh this page to finalize the publishing process.
+                        {this.state.formPublishMessage} <br />
+                        Your form is published at path {getFormPath(formName, course, this.state.formUrl)}. <br />
+                    </Alert>
+                </Snackbar>
+                <Snackbar
+                    open={this.state.showMissingFormNameError}
+                    autoHideDuration={8000}
+                    onClose={() => this.setState({showMissingFormNameError: false})}
+                    anchorOrigin={{vertical: "top", horizontal: "center"}}
+                >
+                    <Alert severity="warning">
+                        Please provide a non-empty form name before submitting.
                     </Alert>
                 </Snackbar>
                 <FormGroup>
@@ -235,11 +296,75 @@ export class FormCreationView extends React.Component {
                             label="Form Name"
                             variant="outlined"
                             required={true}
+                            error={this.checkFormNameCollision()}
+                            helperText={
+                                this.checkFormNameCollision() 
+                                    ? "The form name already exists. By default, unless a new url path is specified below, any changes you make will update the original form." 
+                                    : ""
+                            }
                             value={this.state.formName}
                             onChange={(event) => this.setState({formName: event.target.value})} 
                             fullWidth={true}
                             style={{marginTop: "10pt", marginBottom: "10pt"}}
                         />
+                    </FormControl>
+                    <FormControl>
+                        <div style={{display: "flex", flexDirection: "row"}}>
+                            <Typography variant="h6">
+                                What is the url path for your form?
+                            </Typography>
+                            <Tooltip
+                                arrow={true}
+                                title={
+                                    <React.Fragment>
+                                        <Typography>
+                                            The <b>url path</b> determines where the students can access the form.
+                                            By default, if this section is not specified, the url path will be dervied from
+                                            the form name. For example, if a form is named <code>"A Form"</code> for a course
+                                            CS 10A, the full url to the form will be something similar to <code>BASE-URL/10a/a-form</code>
+                                            This section allows you to <b>override the default url</b>.
+                                        </Typography>
+                                    </React.Fragment>
+                                }
+                                placement="right-start"
+                            >
+                                <InfoRounded />
+                            </Tooltip>
+                        </div>
+                        <TextField
+                            label="Form Url"
+                            variant="outlined"
+                            required={true}
+                            value={this.state.formUrl}
+                            error={this.checkFormUrlCollision()}
+                            helperText={
+                                this.checkFormUrlCollision() 
+                                    ? "The url path already exists; publishing this form will update the original form." 
+                                    : "The url path hasn't been used. If you are updating a form, please note that the new changes will be reflected in the new path."
+                            }
+                            onChange={(event) => this.setState({formUrl: event.target.value})}
+                            fullWidth={true}
+                            style={{marginTop: "10pt", marginBottom: "10pt"}}
+                        />
+                    </FormControl>
+                    <FormControl>
+                        <Typography>
+                            {
+                                this.state.formName.trim().length === 0 
+                                    ? 
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <WarningRounded style={{color: "red"}}/><span style={{color: "red"}}>Form name cannot be empty.</span> 
+                                    </div>
+                                    : 
+                                    <div style={{display: "flex", flexDirection: "row"}}>
+                                        <LinkRounded style={{color: "blue"}}/>
+                                        <span style={{color: "blue"}}>
+                                            The form will be currently published/updated at the following url: &nbsp; 
+                                            <code>{getFormPath(this.state.formName, this.props.course, this.state.formUrl)}</code>
+                                        </span>
+                                    </div>
+                            }
+                        </Typography>
                     </FormControl>
                     <Divider style={{margin: "10pt"}}/>
                     {this.renderAllQuestions()}
@@ -260,7 +385,7 @@ export class FormCreationView extends React.Component {
                             endIcon={<PublishRounded />}
                             onClick={this.submitTemplateForGeneration}
                         >
-                            Publish Form
+                            {this.state.submitButtonName}
                         </Button>
                     </ButtonGroup>
                 </FormGroup>

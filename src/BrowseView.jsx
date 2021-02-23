@@ -15,18 +15,11 @@ import {
 } from "@material-ui/core";
 import {Menu, CheckCircleRounded, ErrorRounded, NoteAddRounded} from "@material-ui/icons";
 import { Autocomplete, Alert } from "@material-ui/lab";
-import { DataGrid } from "@material-ui/data-grid";
 import { FormCreationView } from "./FormCreationView";
+import FormMetadataGridView from "./FormMetadataGridView";
 import ApiManager from "./api/api";
 import {GoogleLogin, GoogleLogout} from "react-google-login";
 import { courses, getFormPath } from "./data/utils";
-
-const formMetadataColumns = [
-    { field: "name", headerName: "Author", width: 200 },
-    { field: "formName", headerName: "Form Name", width: 300 },
-    { field: "count", headerName: "# Responses", width: 150 },
-    { field: "url", headerName: "Published Url", width: 400 },
-];
 
 class BrowseView extends React.Component {
     constructor(props) {
@@ -56,6 +49,8 @@ class BrowseView extends React.Component {
             console.log("Received response from user registration check", response.data);
             const isUserRegistered = response.data["is_registered"];
             const isInitialized = true;
+            localStorage.setItem("isRegistered", isUserRegistered);
+            localStorage.setItem("username", this.state.name);
             this.setState({isUserRegistered, isInitialized});
         });
         this.fetchAllCourseFormMetadata();
@@ -164,7 +159,7 @@ class BrowseView extends React.Component {
             const metadata = response.data["metadata"]
             console.log("Received response from /template_metadata", metadata);
             metadata.forEach((row, index) => {
-                row["url"] = getFormPath(row["formName"], row["course"]);
+                row["url"] = getFormPath(row["formName"], row["course"], row["formUrl"]);
                 row["id"] = index;
             })
             this.setState({formMetadata: metadata});
@@ -270,7 +265,11 @@ class BrowseView extends React.Component {
                     </Alert>
                 </Snackbar>
                 <div style={{ width: "100%", height: "800px"}}>
-                    <DataGrid rows={this.state.formMetadata} columns={formMetadataColumns} pageSize={20} />
+                    <FormMetadataGridView
+                        rowData={this.state.formMetadata}
+                        isRegistered={this.state.isUserRegistered}
+                        username={this.state.name}
+                    />
                 </div>
             </>
         );
