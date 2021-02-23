@@ -21,8 +21,12 @@ def check_user_registration(email):
 
 def verify_registration(user_info):
     user_info = dict(user_info)
-    course = user_info.get("course")
-    key = user_info.get("key")
+    course = user_info.get('course')
+    key = user_info.get('key')
+    if isinstance(course, list):
+        course = course[0]
+    if isinstance(key, list):
+        key = key[0]
     resp = {'error': None, 'success': False}
     if course is None or key is None:
         resp['error'] = 'Course name and key cannot be empty.'
