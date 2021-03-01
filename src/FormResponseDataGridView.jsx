@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Typography} from "@material-ui/core";
+import { Typography } from "@material-ui/core";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-balham.css";
@@ -24,7 +24,7 @@ export class FormResponseDataGridView extends React.Component {
                 <Typography variant="h6">All Responses</Typography>
                 <div
                     className="ag-theme-balham"
-                    style={{height: "200pt", width: "100%"}}
+                    style={{ height: "200pt", width: "100%" }}
                 >
                     <AgGridReact
                         enableCellTextSelection={true}
