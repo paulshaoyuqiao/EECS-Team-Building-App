@@ -1,5 +1,7 @@
 import * as React from "react";
 import { v4 as uuidv4 } from "uuid";
+import DateFnsUtils from "@date-io/date-fns";
+import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import {
     FormGroup,
     FormControl,
@@ -16,26 +18,20 @@ import {
     Snackbar,
     Tooltip,
 } from "@material-ui/core";
-import {Alert} from "@material-ui/lab";
+import { Alert } from "@material-ui/lab";
 import {
-    AddCircleRounded, 
-    Delete, 
-    Clear, 
-    PublishRounded, 
-    CheckCircleRounded, 
+    AddCircleRounded,
+    Delete,
+    Clear,
+    PublishRounded,
+    CheckCircleRounded,
     CancelRounded,
     InfoRounded,
     WarningRounded,
     LinkRounded,
 } from "@material-ui/icons";
 import ApiManager from "./api/api";
-import {getFormPath} from "./data/utils";
-
-const qType = Object.freeze({
-    shortAnswer: "short-answer",
-    singleSelect: "single-select",
-    multiSelect: "multi-select",
-});
+import { getFormPath, QuestionType } from "./data/utils";
 
 export class FormCreationView extends React.Component {
     constructor(props) {
@@ -44,6 +40,9 @@ export class FormCreationView extends React.Component {
             template: [],
             formName: "",
             formUrl: "",
+            formReleaseDate: new Date(),
+            formDueDate: new Date(),
+            isDueDateSet: false,
             allFormNames: new Set(),
             allFormSubUrls: new Set(),
             submitButtonName: "Publish Form",
@@ -54,19 +53,19 @@ export class FormCreationView extends React.Component {
     }
 
     componentDidMount() {
-        const {formName, formUrl, template} = this.props;
+        const {formName, formUrl, formReleaseDate, formDueDate, template} = this.props;
         if (formName && template) {
             const submitButtonName = "Update Form";
             const formPublishMessage = "Form Successfully Updated!"
             // If form name and the template have been predefined, the form is being edited
-            this.setState({formName, formUrl, template, submitButtonName, formPublishMessage});
+            this.setState({formName, formUrl, formReleaseDate, formDueDate, template, submitButtonName, formPublishMessage});
         }
         this.fetchAllFormMetadata();
     }
 
     fetchAllFormMetadata = () => {
         // Fetches all the registered form names and suburls to avoid collision
-        ApiManager.get("/template_metadata", {course: this.props.course}).then((response) => {
+        ApiManager.get("/template_metadata", { course: this.props.course }).then((response) => {
             const metadata = response.data["metadata"]
             console.log("Received response from /template_metadata", metadata);
             const allFormNames = new Set(metadata.map((row) => row["formName"]));
@@ -74,7 +73,7 @@ export class FormCreationView extends React.Component {
                 const url = getFormPath(row["formName"], row["course"], row["formUrl"]);
                 return url.split("/").lastItem;
             }));
-            this.setState({allFormNames, allFormSubUrls});
+            this.setState({ allFormNames, allFormSubUrls });
         });
     }
 
@@ -84,20 +83,20 @@ export class FormCreationView extends React.Component {
             <>
                 {allOptions.map((_, optionIndex) => {
                     return (
-                        <div style={{display: "table-cell", verticalAlign: "middle"}}>
+                        <div style={{ display: "table-cell", verticalAlign: "middle" }}>
                             <TextField
                                 label="Option"
                                 variant="outlined"
                                 value={template[index]["options"][optionIndex]}
-                                style={{marginBottom: "10pt", width: "300pt"}}
+                                style={{ marginBottom: "10pt", width: "300pt" }}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton 
+                                            <IconButton
                                                 onClick={() => {
                                                     const template = this.state.template;
                                                     template[index]["options"][optionIndex] = "";
-                                                    this.setState({template});
+                                                    this.setState({ template });
                                                 }}
                                             >
                                                 <Clear />
@@ -108,18 +107,18 @@ export class FormCreationView extends React.Component {
                                 onChange={(event) => {
                                     const template = this.state.template;
                                     template[index]["options"][optionIndex] = event.target.value;
-                                    this.setState({template});
+                                    this.setState({ template });
                                 }}
                             />
-                            <IconButton 
-                                color="secondary" 
+                            <IconButton
+                                color="secondary"
                                 size="medium"
-                                style={{marginBottom: "10pt"}}
+                                style={{ marginBottom: "10pt" }}
                                 onClick={() => {
                                     let currQuestion = this.state.template[index];
                                     let options = currQuestion["options"];
                                     currQuestion["options"] = options.filter((_, currIndex) => currIndex !== optionIndex);
-                                    this.setState({template});
+                                    this.setState({ template });
                                 }}
                             >
                                 <Delete />
@@ -138,34 +137,34 @@ export class FormCreationView extends React.Component {
                 required={true}
                 variant="outlined"
                 key={`shortAnswerPrompt-${index}`}
-                style={{width: "300pt", marginRight: "10pt"}}
+                style={{ width: "300pt", marginRight: "10pt" }}
                 value={prompt}
                 onChange={(event) => {
                     const template = this.state.template;
                     template[index]["prompt"] = event.target.value;
-                    this.setState({template});
+                    this.setState({ template });
                 }}
             />
         );
         const optionsField = (
             <FormControl>
                 {this.renderAllOptions(index, options)}
-                <Button 
-                    variant="contained" 
+                <Button
+                    variant="contained"
                     startIcon={<AddCircleRounded />}
                     size="large"
                     color="primary"
                     onClick={() => {
                         const template = this.state.template;
                         template[index]["options"].push("");
-                        this.setState({template});
+                        this.setState({ template });
                     }}
                 >
                     Add Another Option
                 </Button>
             </FormControl>
         )
-        if (questionType === qType.shortAnswer) {
+        if (questionType === QuestionType.SHORT_ANSWER) {
             return promptField;
         } else {
             return (
@@ -184,7 +183,7 @@ export class FormCreationView extends React.Component {
                 {allQuestions.map((question, index) => {
                     return (
                         <>
-                            <div style={{display: "flex", flexDirection: "row"}}>
+                            <div style={{ display: "flex", flexDirection: "row" }}>
                                 <Typography variant="h6">Question</Typography>
                                 <IconButton
                                     style={{
@@ -193,41 +192,68 @@ export class FormCreationView extends React.Component {
                                         paddingLeft: "5pt",
                                         paddingRight: 0,
                                     }}
-                                    color="secondary" 
+                                    color="secondary"
                                     onClick={() => {
                                         let template = this.state.template;
                                         console.log("deleting index", index);
                                         template.splice(index, 1);
-                                        this.setState({template});
+                                        this.setState({ template });
                                     }}
                                 >
                                     <CancelRounded />
                                 </IconButton>
                             </div>
-                            <div style={{display: "flex", flexDirection: "row", margin: "10pt"}}>
-                                <FormControl style={{marginRight: "10pt"}}>
+                            <div style={{ display: "flex", flexDirection: "row", margin: "10pt" }}>
+                                <FormControl style={{ marginRight: "10pt" }}>
                                     <InputLabel>Question Type</InputLabel>
                                     <Select
                                         value={question["type"]}
-                                        style={{width: "150pt"}}
+                                        style={{ width: "150pt" }}
                                         onChange={(event) => {
                                             let template = this.state.template;
                                             template[index]["type"] = event.target.value;
-                                            this.setState({template});
+                                            this.setState({ template });
                                         }}
                                     >
-                                        <MenuItem value={qType.shortAnswer}>Short Answer</MenuItem>
-                                        <MenuItem value={qType.singleSelect}>Multiple Choice</MenuItem>
-                                        <MenuItem value={qType.multiSelect}>Multiselect Checkbox</MenuItem>
+                                        <MenuItem value={QuestionType.SHORT_ANSWER}>Short Answer</MenuItem>
+                                        <MenuItem value={QuestionType.SINGLE_SELECT}>Multiple Choice</MenuItem>
+                                        <MenuItem value={QuestionType.MULTI_SELECT}>Multiselect Checkbox</MenuItem>
+                                        <MenuItem value={QuestionType.GRID_RANK}>Grid-based Ranking</MenuItem>
                                     </Select>
                                 </FormControl>
                                 {this.renderQuestionSkeleton(question.type, question.prompt, question.options, index)}
                             </div>
-                            <Divider style={{margin: "10pt"}}/>
+                            <Divider style={{ margin: "10pt" }} />
                         </>
                     );
                 })}
             </>
+        );
+    }
+
+    renderFormDatePicker = (isRelease) => {
+        let onDateChanged;
+        if (isRelease) {
+            onDateChanged = (value) => this.setState({formReleaseDate: value});
+        } else {
+            onDateChanged = (value) => this.setState({formDueDate: value, isDueDateSet: true});
+        }
+
+        return (
+            <FormControl>
+                <Typography variant="h6">
+                    {isRelease ? "When do you want to release the form?" : "When do you want to close the form?"}
+                </Typography>
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                    <DateTimePicker 
+                        variant="inline"
+                        label={isRelease ? "Release Date" : "Due Date"}
+                        value={isRelease ? this.state.formReleaseDate : this.state.formDueDate}
+                        onChange={onDateChanged}
+                        format="yyyy/MM/dd HH:mm"
+                    />
+                </MuiPickersUtilsProvider>
+            </FormControl>
         );
     }
 
@@ -236,6 +262,7 @@ export class FormCreationView extends React.Component {
         if (typeof formName !== "string" || formName.trim().length === 0) {
             this.setState({showMissingFormNameError: true});
         } else {
+            const formDueDate = this.state.isDueDateSet ? this.state.formDueDate : null;
             const templateData = {
                 name: this.props.name,
                 email: this.props.email,
@@ -243,6 +270,8 @@ export class FormCreationView extends React.Component {
                 template: this.state.template,
                 formName: formName,
                 formUrl: this.state.formUrl,
+                formReleaseDate: this.state.formReleaseDate.toISOString(),
+                formDueDate: formDueDate,
             };
             const formId = this.props.formId;
             templateData["formId"] = formId ? formId : uuidv4();
@@ -271,8 +300,8 @@ export class FormCreationView extends React.Component {
                 <Snackbar
                     open={this.state.showFormCreationSuccess}
                     autoHideDuration={8000}
-                    onClose={() => this.setState({showFormCreationSuccess: false})}
-                    anchorOrigin={{vertical: "top", horizontal: "center"}}
+                    onClose={() => this.setState({ showFormCreationSuccess: false })}
+                    anchorOrigin={{ vertical: "top", horizontal: "center" }}
                 >
                     <Alert severity="success" icon={<CheckCircleRounded />}>
                         {this.state.formPublishMessage} <br />
@@ -282,8 +311,8 @@ export class FormCreationView extends React.Component {
                 <Snackbar
                     open={this.state.showMissingFormNameError}
                     autoHideDuration={8000}
-                    onClose={() => this.setState({showMissingFormNameError: false})}
-                    anchorOrigin={{vertical: "top", horizontal: "center"}}
+                    onClose={() => this.setState({ showMissingFormNameError: false })}
+                    anchorOrigin={{ vertical: "top", horizontal: "center" }}
                 >
                     <Alert severity="warning">
                         Please provide a non-empty form name before submitting.
@@ -298,18 +327,18 @@ export class FormCreationView extends React.Component {
                             required={true}
                             error={this.checkFormNameCollision()}
                             helperText={
-                                this.checkFormNameCollision() 
-                                    ? "The form name already exists. By default, unless a new url path is specified below, any changes you make will update the original form." 
+                                this.checkFormNameCollision()
+                                    ? "The form name already exists. By default, unless a new url path is specified below, any changes you make will update the original form."
                                     : ""
                             }
                             value={this.state.formName}
-                            onChange={(event) => this.setState({formName: event.target.value})} 
+                            onChange={(event) => this.setState({ formName: event.target.value })}
                             fullWidth={true}
-                            style={{marginTop: "10pt", marginBottom: "10pt"}}
+                            style={{ marginTop: "10pt", marginBottom: "10pt" }}
                         />
                     </FormControl>
                     <FormControl>
-                        <div style={{display: "flex", flexDirection: "row"}}>
+                        <div style={{ display: "flex", flexDirection: "row" }}>
                             <Typography variant="h6">
                                 What is the url path for your form?
                             </Typography>
@@ -338,35 +367,37 @@ export class FormCreationView extends React.Component {
                             value={this.state.formUrl}
                             error={this.checkFormUrlCollision()}
                             helperText={
-                                this.checkFormUrlCollision() 
-                                    ? "The url path already exists; publishing this form will update the original form." 
+                                this.checkFormUrlCollision()
+                                    ? "The url path already exists; publishing this form will update the original form."
                                     : "The url path hasn't been used. If you are updating a form, please note that the new changes will be reflected in the new path."
                             }
-                            onChange={(event) => this.setState({formUrl: event.target.value})}
+                            onChange={(event) => this.setState({ formUrl: event.target.value })}
                             fullWidth={true}
-                            style={{marginTop: "10pt", marginBottom: "10pt"}}
+                            style={{ marginTop: "10pt", marginBottom: "10pt" }}
                         />
                     </FormControl>
+                    {this.renderFormDatePicker(true)}
+                    {this.renderFormDatePicker(false)}
                     <FormControl>
                         <Typography>
                             {
-                                this.state.formName.trim().length === 0 
-                                    ? 
-                                    <div style={{display: "flex", flexDirection: "row"}}>
-                                        <WarningRounded style={{color: "red"}}/><span style={{color: "red"}}>Form name cannot be empty.</span> 
+                                this.state.formName.trim().length === 0
+                                    ?
+                                    <div style={{ display: "flex", flexDirection: "row" }}>
+                                        <WarningRounded style={{ color: "red" }} /><span style={{ color: "red" }}>Form name cannot be empty.</span>
                                     </div>
-                                    : 
-                                    <div style={{display: "flex", flexDirection: "row"}}>
-                                        <LinkRounded style={{color: "blue"}}/>
-                                        <span style={{color: "blue"}}>
-                                            The form will be currently published/updated at the following url: &nbsp; 
+                                    :
+                                    <div style={{ display: "flex", flexDirection: "row" }}>
+                                        <LinkRounded style={{ color: "blue" }} />
+                                        <span style={{ color: "blue" }}>
+                                            The form will be currently published/updated at the following url: &nbsp;
                                             <code>{getFormPath(this.state.formName, this.props.course, this.state.formUrl)}</code>
                                         </span>
                                     </div>
                             }
                         </Typography>
                     </FormControl>
-                    <Divider style={{margin: "10pt"}}/>
+                    <Divider style={{ margin: "10pt" }} />
                     {this.renderAllQuestions()}
                     <ButtonGroup disableElevation variant="contained">
                         <Button
@@ -374,8 +405,8 @@ export class FormCreationView extends React.Component {
                             startIcon={<AddCircleRounded />}
                             onClick={() => {
                                 const allQuestions = this.state.template;
-                                allQuestions.push({type: qType.shortAnswer, prompt: "", options: []});
-                                this.setState({template: allQuestions});
+                                allQuestions.push({ type: QuestionType.SHORT_ANSWER, prompt: "", options: [] });
+                                this.setState({ template: allQuestions });
                             }}
                         >
                             Add a New Question

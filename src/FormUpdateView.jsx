@@ -7,7 +7,7 @@ export class FormUpdateView extends React.Component {
     render() {
         const user = localStorage.getItem("username");
         const isRegistered = localStorage.getItem("isRegistered");
-        const {template, formName, formId, formUrl, course} = this.props;
+        const {template, formName, formId, formUrl, formDueDate, formReleaseDate, course} = this.props;
         return (
             <div style={{flexGrow: 1}}>
                 <AppBar position="static" variant="outlined" color="primary">
@@ -38,6 +38,8 @@ export class FormUpdateView extends React.Component {
                             formName={formName} 
                             formId={formId} 
                             formUrl={formUrl}
+                            formReleaseDate={formReleaseDate}
+                            formDueDate={formDueDate}
                             course={course} 
                         />
                         :

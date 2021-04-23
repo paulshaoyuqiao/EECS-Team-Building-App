@@ -1,8 +1,8 @@
 import * as React from "react";
-import {Toolbar, AppBar, IconButton, Typography, Box, Divider} from "@material-ui/core";
-import {BarChart} from "@material-ui/icons";
-import {FormResponseDataGridView} from "./FormResponseDataGridView";
-import {FormResponseHistogramView} from "./FormResponseHistogramView";
+import { Toolbar, AppBar, IconButton, Typography, Box, Divider } from "@material-ui/core";
+import { BarChart } from "@material-ui/icons";
+import { FormResponseDataGridView } from "./FormResponseDataGridView";
+import { FormResponseHistogramView } from "./FormResponseHistogramView";
 import ApiManager from "./api/api.js";
 
 export class FormResponseSummaryView extends React.Component {
@@ -16,14 +16,14 @@ export class FormResponseSummaryView extends React.Component {
     }
 
     componentDidMount = () => {
-        const params = {formId: this.props.formId};
+        const params = { formId: this.props.formId };
         ApiManager.get("/aggregate_response", params).then((response) => {
             const data = response.data;
             console.log("Received responses from /aggregate_response", data);
             const gridData = "grid_responses" in data ? data["grid_responses"] : [];
             const columnDefs = "grid_column_defs" in data ? data["grid_column_defs"] : [];
             const aggregatedResponses = "aggregated_responses" in data ? data["aggregated_responses"] : {};
-            this.setState({gridData, columnDefs, aggregatedResponses});
+            this.setState({ gridData, columnDefs, aggregatedResponses });
         })
     }
 
@@ -31,7 +31,7 @@ export class FormResponseSummaryView extends React.Component {
         return (
             <>
                 <FormResponseDataGridView columnDefs={this.state.columnDefs} rowData={this.state.gridData} />
-                <Divider style={{margin: "10pt"}} />
+                <Divider style={{ margin: "10pt" }} />
                 <FormResponseHistogramView aggregatedResponses={this.state.aggregatedResponses} />
             </>
         );
@@ -47,7 +47,7 @@ export class FormResponseSummaryView extends React.Component {
                         <IconButton edge="start">
                             <BarChart />
                         </IconButton>
-                        <Typography variant="h6" style={{flexGrow: 1}}>
+                        <Typography variant="h6" style={{ flexGrow: 1 }}>
                             Team Builder - Response Summary for Form: {this.props.formName}
                         </Typography>
                         <Typography variant="h6">

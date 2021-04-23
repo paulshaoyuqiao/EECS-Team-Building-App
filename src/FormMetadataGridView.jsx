@@ -43,7 +43,6 @@ class FormMetadataGridView extends React.Component {
     }
 
     getLink = (node, type) => {
-        console.log("node", node);
         const formUrl = node.data.url;
         const partialUrl = formUrl.substring(formUrl.indexOf("/") + 1);
         switch (type) {
